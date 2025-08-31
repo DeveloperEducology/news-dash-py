@@ -1,9 +1,7 @@
-Flask==2.3.5
-Flask-Session==0.5.0
+Flask==2.3.3
+Flask-Session==0.4.0
 feedparser==6.0.10
-deep-translator==1.9.1
+deep-translator==1.11.2
 nltk==3.8.1
 sumy==0.11.0
-pymongo==4.6.0
-apscheduler==3.12.0
-gunicorn==21.2.0
+pymongo==4.6.1
