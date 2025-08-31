@@ -3,6 +3,7 @@ from flask_session import Session
 from deep_translator import GoogleTranslator
 import feedparser
 import nltk
+import requests
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lex_rank import LexRankSummarizer
@@ -37,8 +38,8 @@ raw_articles = db["raw_articles"]
 # --- Languages & RSS ---
 LANGUAGES = {"en": "English", "te": "Telugu", "hi": "Hindi", "fr": "French", "de": "German", "es": "Spanish"}
 RSS_SOURCES = {
-    "BBC": "http://feeds.bbci.co.uk/news/rss.xml",
-    "NDTV": "https://feeds.feedburner.com/ndtvnews-top-stories"
+    "bbc": "http://feeds.bbci.co.uk/news/rss.xml",
+    "ndtv": "https://feeds.feedburner.com/ndtvnews-top-stories"
 }
 
 # --- Telugu Categories ---
@@ -51,6 +52,18 @@ CATEGORIES = {
     "ఆరోగ్యం": ["ఆసుపత్రి", "ఆరోగ్యం", "డాక్టర్", "వ్యాధి", "టీకా", "హెల్త్"],
     "విద్య": ["పరీక్షలు", "విద్య", "పాఠశాల", "కాలేజీ", "విశ్వవిద్యాలయం"]
 }
+
+
+def wake_up_server():
+    url = os.environ.get("RENDER_EXTERNAL_URL") or "https://news-dash.onrender.com/"
+    try:
+        requests.get(url, timeout=10)
+        print("Self-ping successful")
+    except Exception as e:
+        print("Self-ping failed:", e)
+
+        scheduler.add_job(func=wake_up_server, trigger="interval", minutes=5)
+
 
 # --- Summarization ---
 def summarize_text(text, sentence_count=3):
