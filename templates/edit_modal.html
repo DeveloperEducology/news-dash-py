@@ -1,0 +1,34 @@
+<input type="hidden" name="article_id" value="{{ article._id }}" id="edit_id">
+<div class="mb-2">
+    <label>Title</label>
+    <input type="text" class="form-control" name="title" id="edit_title" value="{{ article.title }}">
+</div>
+<div class="mb-2">
+    <label>English Summary</label>
+    <textarea class="form-control" name="summary_en" id="edit_summary_en">{{ article.summary_en }}</textarea>
+</div>
+<div class="mb-2">
+    <label>Translated Summary</label>
+    <textarea class="form-control" name="summary_translated" id="edit_summary_translated">{{ article.summary_translated }}</textarea>
+</div>
+<div class="mb-2">
+    <label>Category</label>
+    <select class="form-select" name="category" id="edit_category">
+        {% for cat in categories %}
+            <option value="{{ cat }}" {% if article.category==cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="mb-2">
+    <label>Language</label>
+    <select class="form-select" name="target_lang" id="edit_target_lang">
+        {% for code, lang in languages.items() %}
+            <option value="{{ code }}" {% if article.target_lang==code %}selected{% endif %}>{{ lang }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="mb-2">
+    <label>Source</label>
+    <input type="text" class="form-control" value="{{ article.source }}" readonly>
+</div>
+<div id="edit_status" class="mt-2"></div>

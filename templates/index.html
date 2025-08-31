@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>News Translator Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+body { font-family: Arial, sans-serif; background:#f5f5f5; padding:15px; }
+table { width: 100%; border-collapse: collapse; margin-top: 15px; background:#fff; border-radius:8px; overflow:hidden; }
+th, td { border: 1px solid #ccc; padding: 6px; text-align: left; font-size: 13px; vertical-align:top; }
+th { background-color: #f0f0f0; }
+.compact td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+.modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index:1000; }
+.modal-content { background:#fff; margin: 5% auto; padding:20px; width: 50%; position: relative; border-radius:8px; }
+.close { position:absolute; top:5px; right:10px; cursor:pointer; font-size:20px; }
+.btn { padding: 4px 10px; margin: 2px; cursor:pointer; border-radius:4px; }
+.btn-edit { background: #2196F3; color: #fff; border:none; }
+.btn-delete { background:#f44336; color:#fff; border:none; }
+.success { color:green; }
+.fail { color:red; }
+.pagination { margin-top:10px; }
+.pagination button { margin:0 2px; }
+.new-badge { background:red; color:#fff; font-size:11px; padding:2px 5px; border-radius:4px; margin-left:5px; }
+</style>
+
+<script>
+function openEditModal(article){
+    document.getElementById('editModal').style.display='block';
+    document.getElementById('edit_id').value = article._id || article._id.$oid || '';
+    document.getElementById('edit_title').value = article.title;
+    document.getElementById('edit_summary_en').value = article.summary_en;
+    document.getElementById('edit_summary_translated').value = article.summary_translated;
+    document.getElementById('edit_category').value = article.category;
+    document.getElementById('edit_language').value = article.target_lang;
+}
+function closeEditModal(){ document.getElementById('editModal').style.display='none'; }
+function toggleView(){ document.getElementById('articlesTable').classList.toggle('compact'); }
+function showSaveStatus(success){
+    const status = document.getElementById('saveStatus');
+    status.style.display='block';
+    status.className = success ? 'success' : 'fail';
+    status.innerText = success ? 'Saved successfully!' : 'Save failed!';
+    setTimeout(()=>{status.style.display='none';},3000);
+}
+</script>
+</head>
+
+<body>
+<div class="container">
+<h1>News Translator Dashboard</h1>
+
+<!-- Search & Filter -->
+<form method="get">
+<input type="text" name="keyword" placeholder="Search..." value="{{ keyword }}">
+<select name="category">
+<option value="">All Categories</option>
+{% for cat in categories %}
+<option value="{{ cat }}" {% if selected_category==cat %}selected{% endif %}>{{ cat }}</option>
+{% endfor %}
+</select>
+<select name="per_page">
+{% for n in [5,10,20,50] %}
+<option value="{{ n }}" {% if per_page==n %}selected{% endif %}>{{ n }} per page</option>
+{% endfor %}
+</select>
+<button type="submit" class="btn">Filter</button>
+</form>
+
+<!-- RSS fetch -->
+<form method="post" style="margin-top:10px;">
+<label>Source:</label>
+<select name="source">{% for key,url in sources.items() %}
+<option value="{{ key }}">{{ key }}</option>{% endfor %}</select>
+
+<label>Language:</label>
+<select name="language">{% for code,lang in languages.items() %}
+<option value="{{ code }}">{{ lang }}</option>{% endfor %}</select>
+
+<label>Max words:</label>
+<input type="number" name="max_words" value="60" style="width:60px;">
+
+<label><input type="checkbox" name="translate_full"> Full Article</label>
+
+<button type="submit" class="btn">Fetch Articles</button>
+</form>
+
+<div style="margin-top:10px;">
+<button class="btn" onclick="toggleView()">Toggle Compact/Detail View</button>
+</div>
+
+<!-- Articles Table -->
+<table id="articlesTable" class="compact">
+<thead>
+<tr>
+<th>Title</th>
+<th>Published</th>
+<th>Source</th>
+<th>Category</th>
+<th>Summary (Telugu)</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+{% for article in articles %}
+<tr>
+<td>
+    <a href="{{ article.link }}" target="_blank">{{ article.title }}</a>
+    {% if article.is_new %}
+        <span class="new-badge">New</span>
+    {% endif %}
+</td>
+<td>{{ article.published }}</td>
+<td>{{ article.source }}</td>
+<td>{{ article.category }}</td>
+<td>{{ article.summary_translated }}</td>
+<td>
+<button class="btn btn-edit" onclick='openEditModal({{ article | tojson | safe }})'>Edit</button>
+<form method="post" action="{{ url_for('delete_article', id=article._id) }}" style="display:inline;">
+<button type="submit" class="btn btn-delete">Delete</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<!-- Pagination -->
+<div class="pagination">
+{% if page>1 %}
+<a href="{{ url_for('index', page=page-1, per_page=per_page, keyword=keyword, category=selected_category) }}"><button>&laquo; Prev</button></a>
+{% endif %}
+<span>Page {{ page }} of {{ total_pages }}</span>
+{% if page<total_pages %}
+<a href="{{ url_for('index', page=page+1, per_page=per_page, keyword=keyword, category=selected_category) }}"><button>Next &raquo;</button></a>
+{% endif %}
+</div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeEditModal()">&times;</span>
+<h2>Edit Article</h2>
+<form method="post" action="{{ url_for('edit_article') }}">
+<input type="hidden" name="id" id="edit_id">
+<label>Title:</label>
+<input type="text" name="title" id="edit_title" required>
+
+<label>Summary (English):</label>
+<textarea name="summary_en" id="edit_summary_en" rows="4" required></textarea>
+
+<label>Summary (Telugu):</label>
+<textarea name="summary_translated" id="edit_summary_translated" rows="4" required></textarea>
+
+<label>Category:</label>
+<select name="category" id="edit_category">
+{% for cat in categories %}
+<option value="{{ cat }}">{{ cat }}</option>
+{% endfor %}
+</select>
+
+<label>Language:</label>
+<select name="target_lang" id="edit_language">
+{% for code,lang in languages.items() %}
+<option value="{{ code }}">{{ lang }}</option>
+{% endfor %}
+</select>
+
+<button type="submit" class="btn btn-edit">Save Changes</button>
+<div id="saveStatus"></div>
+</form>
+</div>
+</div>
+</body>
+</html>

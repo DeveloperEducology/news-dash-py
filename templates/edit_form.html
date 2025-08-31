@@ -1,0 +1,63 @@
+<form id="editForm" method="POST">
+  <div class="modal-header">
+    <h5 class="modal-title">Edit Article</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mb-3">
+      <label>Title</label>
+      <input type="text" name="title" class="form-control" value="{{ article.title }}">
+    </div>
+    <div class="mb-3">
+      <label>English Summary</label>
+      <textarea name="summary_en" class="form-control" rows="3">{{ article.summary_en }}</textarea>
+    </div>
+    <div class="mb-3">
+      <label>Translated</label>
+      <textarea name="summary_translated" class="form-control" rows="3">{{ article.summary_translated }}</textarea>
+    </div>
+    <div class="mb-3">
+      <label>Category</label>
+      <select name="category" class="form-select">
+        {% for cat in categories %}
+          <option value="{{ cat }}" {% if article.category==cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label>Language</label>
+      <select name="target_lang" class="form-select">
+        {% for code, lang in languages.items() %}
+          <option value="{{ code }}" {% if article.target_lang==code %}selected{% endif %}>{{ lang }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label>Source</label>
+      <input type="text" class="form-control" name="source" value="{{ article.source }}" readonly>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="translate_full" id="translateFullEdit" {% if article.translate_full %}checked{% endif %}>
+      <label class="form-check-label" for="translateFullEdit">Translate Full Article</label>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-success">Save</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+  </div>
+</form>
+
+<script>
+$('#editForm').submit(function(e){
+  e.preventDefault();
+  var form = $(this);
+  var actionUrl = window.location.pathname;
+  $.post(actionUrl, form.serialize(), function(resp){
+    if(resp.status=="success"){
+      location.reload();
+    } else {
+      alert("Save failed!");
+    }
+  });
+});
+</script>
