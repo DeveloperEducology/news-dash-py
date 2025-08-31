@@ -57,7 +57,7 @@ CATEGORIES = {
 def wake_up_server():
     url = os.environ.get("RENDER_EXTERNAL_URL") or "https://news-dash.onrender.com/"
     try:
-        requests.get(url, timeout=10)
+        requests.get(url, timeout=5)
         print("Self-ping successful")
     except Exception as e:
         print("Self-ping failed:", e)
